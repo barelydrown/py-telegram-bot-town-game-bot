@@ -40,7 +40,6 @@ def get_all_letters(html):
     with open('all_letters_list.json', 'w', encoding='utf-8') as l_json:
         json.dump(pages, l_json)
 
-
 def parse():
     '''
     Парсит названия всех городов на всевозможные буквы, записывает
