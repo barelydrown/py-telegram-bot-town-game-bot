@@ -1,1 +1,1 @@
-# telegram-bot-town-game-bot
+# py-telegram-bot-town-game-bot
