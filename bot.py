@@ -7,7 +7,6 @@ from main_logic import rand_town, usage_check, town_validity
 
 from config import TOKEN
 
-my_id = 462156065
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
 
 def tg_id(message):
