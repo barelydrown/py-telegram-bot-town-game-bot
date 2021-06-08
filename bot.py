@@ -2,9 +2,7 @@ import telebot
 from telebot import types
 import os
 
-from main_logic import rand_town, usage_check, town_validity
-
-
+from game import game_logic as g
 from config import TOKEN
 
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
@@ -35,19 +33,19 @@ def start(message):
 def bot_first_move(message):
     mci = message.chat.id
     while True:
-        town = rand_town()
-        if usage_check(mci, town):
+        town = g.rand_town()
+        if g.usage_check(mci, town):
             bot.send_message(mci, town)
             bot.send_message(mci, 'Ваш ход.')
             break
 
 def bot_move(message):
-    pass
+    mci = message.chat.id
 
 def human_move(message):
     mci = message.chat.id
     input_town = message.text
-    if town_validity(input_town.lower()) and usage_check(mci, input_town):
+    if g.town_validity(input_town.lower()) and g.usage_check(mci, input_town):
         bot.send_message(mci, 'Окей')
     else:
         incorrect = bot.send_message(mci, 'Не знаю такого города...')
