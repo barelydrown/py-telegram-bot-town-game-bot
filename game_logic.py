@@ -1,14 +1,27 @@
 import random
+import string
+from string import ascii_lowercase, digits
 import json
 
-from ..dicts import dict_init
-from ..config import my_id
+import dict_init
+from config import my_id
 
 dict = dict_init.RU_TOWNS_DICT
 all_towns_list = dict_init.RU_TOWNS_LIST
-
+punctuation = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '.', ':', ';', '<', '=', '>', '?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~']
 
 #dict = {'Ф': ['Фатеж', 'Феодосия', 'Фокино', 'Фролово', 'Фрязино', 'Фурманов'], 'О': ["Омск", 'Ольгинск'], 'Х': ['Хорус']}
+
+def is_text(input):
+    for s in input:
+        if s in list(digits):
+            return 'digit'
+        if s in punctuation:
+            return 'punctuation'
+        if s in list(ascii_lowercase):
+            return 'eng'
+        else:
+            return True
 
 def rand_town():
     '''Возвращает случайный город'''
@@ -51,21 +64,28 @@ def letter_validity(town, input_town):
     else:
         return False
 
+def add_town(town, tg_id):
+    with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
+        f2.write(town.lower() + '_')
+
 def usage_check(town, tg_id):
     '''Проверяет был ли уже назван город. Если нет - записывает в used_towns.txt (lowercase).'''
-    while True:
-        # Открывает список названных городов
-        with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
-            span1 = f1.read()
-            span2 = span1.split('_')
+    # Открывает список названных городов
+    with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
+        span1 = f1.read()
+        span2 = span1.split('_')
 
-            if town.lower() not in span2:
-                # Записывает город
-                with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
-                    f2.write(town.lower() + '_')
-                return True
-            else:
-                return 'used_town' # Если город уже был назван
+        if town.lower() not in span2:
+            # Записывает город
+            return True
+        else:
+            return 'used_town' # Если город уже был назван
+
+def letter_existence(letter):
+    if letter.upper() in dict.keys():
+        return True
+    else:
+        return False
 
 def rest_check(letter, tg_id):
     '''Проверяет остались ли еще слова на данную букву'''
@@ -86,7 +106,7 @@ def rest_check(letter, tg_id):
         f_l = t[0]
         used_dict[f_l].append(t)
 
-    if letter.upper() in dict.keys(): # Есть ли в базе города на букву
+    if letter_existence(letter): # Есть ли в базе города на букву
         try:
             if set(used_dict[letter.upper()]) != set(dict[letter.upper()]):
                 return True # Если города на букву остались
@@ -97,7 +117,7 @@ def rest_check(letter, tg_id):
     else:
         return 'no_letter_dict' # Если буквы нет в словаре
 
-def need_letter(input_town, tg_id):
+def need_letter(town, tg_id):
     '''
     ВОЗВРАЩАЕТ НУЖНУЮ БУКВУ ИЛИ СТРОКУ ОШИБКИ
 
@@ -108,38 +128,33 @@ def need_letter(input_town, tg_id):
     Если ни одна буква в названии города не прошла проверку,
     возвращает строку с ошибкой.
     '''
-    with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f3:
-        span1 = f3.read()
-        used_towns = span1.split('_')
 
-    mod_town = input_town
+    mod_town = town
     town_letter_list = list(mod_town)
     reversed_tll = town_letter_list[::-1]
-    last_letter = mod_town[-1]
-    counter = 0
+    no_dict_letters = [] # список букв, на которые не начинается ни один город в базе
+    wrong_letters = [] # список букв, на которые не осталось городов
 
-    if last_letter.upper() in dict.keys():
-        if used_towns:
-            for l in reversed_tll: # проходит циклом по всем буквам города (в обратном порядке)
-                if l.upper() in dict.keys(): # проверяет есть ли буква в базовом словаре
-                    if rest_check(l, tg_id=tg_id) == True:
+    for l in reversed_tll: # проходит циклом по всем буквам города (в обратном порядке)
+        if rest_check(l, tg_id=tg_id) != 'no_letter_dict':
+            if rest_check(l, tg_id=tg_id) != 'all_town_on_letter_used':
+                if rest_check(l, tg_id=tg_id) == True:
+                    if not no_dict_letters and not wrong_letters:
                         return l.lower()
-                    if rest_check(l, tg_id=tg_id) == 'all_town_on_letter_used':
-                        counter += 1
-                        if counter != len(reversed_tll):
-                            continue
-                        else:
-                            return 'no_available_town'
+                    elif no_dict_letters:
+                        return l.lower(), no_dict_letters, 1
+                    elif wrong_letters:
+                        return l.lower(), wrong_letters, 2
                     else:
-                        return 'no_available_town' # Если больше нет доступных городов
-                else:
-                    return 'no_letter_dict' # Если буквы нет в базовом словаре
+                        return l.lower(), no_dict_letters, wrong_letters, 3
+            else:
+                wrong_letters.append(l)
+                if len(no_dict_letters + wrong_letters) == len(town):
+                    return no_dict_letters, wrong_letters, 4
         else:
-            return last_letter.lower() # Если буква есть в словаре и еще нет названных городов
-    else:
-        return 'no_letter_dict' # Если буквы нет в базовом словаре
-
-print(need_letter('Хоф', my_id))
+            no_dict_letters.append(l)
+            if len(no_dict_letters + wrong_letters) == len(town):
+                return no_dict_letters, wrong_letters, 5
 
 def validity(town, input_town, tg_id):
     '''Возвращает название ошибки или True, если ее нет'''
@@ -151,6 +166,3 @@ def validity(town, input_town, tg_id):
         return 'wrong_use'
     else:
         return True
-
-# print(validity('Москва', 'Азов', my_id))
-
