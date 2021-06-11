@@ -1,5 +1,4 @@
 import random
-import string
 from string import ascii_lowercase, digits
 import json
 
@@ -13,15 +12,25 @@ punctuation = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '.', 
 #dict = {'Ф': ['Фатеж', 'Феодосия', 'Фокино', 'Фролово', 'Фрязино', 'Фурманов'], 'О': ["Омск", 'Ольгинск'], 'Х': ['Хорус']}
 
 def is_text(input):
-    for s in input:
+    '''
+    Аргументом может быть только строка.
+    Проверяет строку на наличие цифр, спец. сиимволов и латинских букв.
+    Возвращает True или название ошибки.
+    '''
+    error = ''
+
+    for s in list(input):
         if s in list(digits):
-            return 'digit'
+            error = 'digit'
         if s in punctuation:
-            return 'punctuation'
+            error = 'punctuation'
         if s in list(ascii_lowercase):
-            return 'eng'
-        else:
-            return True
+            error = 'eng'
+
+    if error:
+        return error
+    else:
+        return True
 
 def rand_town():
     '''Возвращает случайный город'''
@@ -34,7 +43,10 @@ def rand_town():
     return rand_town
 
 def next_town(town):
-    '''Возвращает следующий город'''
+    '''
+    Возвращает случайный город, который начинается на последнюю
+    букву города в аргументе.
+    '''
     letters_len = len(town)
     mod_town = town
 
@@ -64,24 +76,35 @@ def letter_validity(town, input_town):
     else:
         return False
 
-def add_town(town, tg_id):
-    with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
-        f2.write(town.lower() + '_')
-
-def usage_check(town, tg_id):
-    '''Проверяет был ли уже назван город. Если нет - записывает в used_towns.txt (lowercase).'''
-    # Открывает список названных городов
+def usage_check(tg_id, town=None, last=False):
+    '''
+    Открывает список названных городов. Если список пустой,
+    возвращает соответсвующую строку сценария.
+    Если список не пустой, проверяет был ли уже назван город.
+    Если параметр last=True, возвращает последний названный город.
+    '''
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
         span1 = f1.read()
         span2 = span1.split('_')
+        span2.remove('')
 
-        if town.lower() not in span2:
-            # Записывает город
-            return True
+        if span1:
+            if last == True:
+                return span2[-1]
+            if town.title() not in span2:
+                return True # Если город еще не был назван
+            else:
+                return 'used_town' # Если город уже был назван
         else:
-            return 'used_town' # Если город уже был назван
+            return 'first_turn' # Если список названных городов пустой
+
+def add_town(town, tg_id):
+    '''Записывает город в текстовой файл с названными городами'''
+    with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
+        f2.write(town.lower() + '_')
 
 def letter_existence(letter):
+    '''Проверяет существование городов, начинающихся на букву, указанную в агрументе'''
     if letter.upper() in dict.keys():
         return True
     else:
@@ -141,28 +164,64 @@ def need_letter(town, tg_id):
                 if rest_check(l, tg_id=tg_id) == True:
                     if not no_dict_letters and not wrong_letters:
                         return l.lower()
-                    elif no_dict_letters:
-                        return l.lower(), no_dict_letters, 1
-                    elif wrong_letters:
-                        return l.lower(), wrong_letters, 2
+                    if no_dict_letters:
+                        return l.lower(), no_dict_letters, '1'
+                    if wrong_letters:
+                        return l.lower(), wrong_letters, '2'
                     else:
-                        return l.lower(), no_dict_letters, wrong_letters, 3
+                        return l.lower(), no_dict_letters, wrong_letters, '3'
             else:
                 wrong_letters.append(l)
                 if len(no_dict_letters + wrong_letters) == len(town):
-                    return no_dict_letters, wrong_letters, 4
+                    return no_dict_letters, wrong_letters, '4'
         else:
             no_dict_letters.append(l)
             if len(no_dict_letters + wrong_letters) == len(town):
-                return no_dict_letters, wrong_letters, 5
+                return no_dict_letters, wrong_letters, '5'
 
-def validity(town, input_town, tg_id):
-    '''Возвращает название ошибки или True, если ее нет'''
-    if not town_validity(input_town):
-        return 'wrong_town'
-    elif not letter_validity(town, input_town):
-        return 'wrong_letter'
-    elif not usage_check(tg_id, town):
-        return 'wrong_use'
+def validity(tg_id, input):
+    '''Возвращает строку/номер ошибки или True, если ее нет'''
+    if is_text(input) == True:
+        if town_validity(input):
+            use_check = usage_check(tg_id, town=input)
+            if use_check == 'first_turn':
+                return True
+
+            if use_check == True:
+                first_letter = input[0].lower()
+                answer = usage_check(tg_id, town=input, last=True)
+                need = need_letter(answer, tg_id)
+
+                if need == first_letter:
+                    return True
+
+                else:
+                    return need[-1]
+
+            if use_check == 'used_town':
+                return 'used_town'
+
+                # if need[-1] == 1:
+                #     bot.send_message(tg_id, f'Каежтся вам на {need[0].upper()}, так как на букву(ы) {need[1].upper()} '
+                #                             f'не начинается ни один город.')
+                #
+                # if need[-1] == 2:
+                #     bot.send_message(tg_id, f'Кажется вам на {need[0].upper()}, так как на букву(ы) {need[1].upper()} '
+                #                             f'не осталось городов.')
+                #
+                # if need[-1] == 3:
+                #     bot.send_message(tg_id, f'Кажется вам на {need[0].upper()}, так как на букву(ы) {need[1].upper()} '
+                #                             f'не начинается ни один город, а на {need[2]} не осталось городов.')
+                #
+                # if need[-1] == 4:
+                #     bot.send_message(tg_id, f'Кажется игра окончена, так как на букву(ы) {need[0].upper()} '
+                #                             f'не начинается ни один город, а на {need[1]} не осталось городов.')
+                #
+                # if need[-1] == 5:
+                #     bot.send_message(tg_id, f'Кажется игра окончена, так как на букву(ы) {need[0].upper()} '
+                #                             f'не начинается ни один город, а на {need[1]} не осталось городов.')
+        else:
+            return 'not_town'
     else:
-        return True
+        return is_text(input)
+
