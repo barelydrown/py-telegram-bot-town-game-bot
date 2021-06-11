@@ -65,16 +65,12 @@ def town_validity(input_town):
     '''Проверяет существование города в базе'''
     if input_town.lower() in all_towns_list:
         return True
-    else:
-        return False
 
 def letter_validity(town, input_town):
     '''Проверяет введен ли город с нужной буквы'''
     need_letter = town[-1].lower()
     if input_town[0].lower() == need_letter:
         return True
-    else:
-        return False
 
 def usage_check(tg_id, town=None, last=False):
     '''
@@ -91,7 +87,8 @@ def usage_check(tg_id, town=None, last=False):
         if span1:
             if last == True:
                 return span2[-1]
-            if town.title() not in span2:
+
+            if town.lower() not in span2:
                 return True # Если город еще не был назван
             else:
                 return 'used_town' # Если город уже был назван
@@ -107,8 +104,6 @@ def letter_existence(letter):
     '''Проверяет существование городов, начинающихся на букву, указанную в агрументе'''
     if letter.upper() in dict.keys():
         return True
-    else:
-        return False
 
 def rest_check(letter, tg_id):
     '''Проверяет остались ли еще слова на данную букву'''
@@ -200,28 +195,7 @@ def validity(tg_id, input):
 
             if use_check == 'used_town':
                 return 'used_town'
-
-                # if need[-1] == 1:
-                #     bot.send_message(tg_id, f'Каежтся вам на {need[0].upper()}, так как на букву(ы) {need[1].upper()} '
-                #                             f'не начинается ни один город.')
-                #
-                # if need[-1] == 2:
-                #     bot.send_message(tg_id, f'Кажется вам на {need[0].upper()}, так как на букву(ы) {need[1].upper()} '
-                #                             f'не осталось городов.')
-                #
-                # if need[-1] == 3:
-                #     bot.send_message(tg_id, f'Кажется вам на {need[0].upper()}, так как на букву(ы) {need[1].upper()} '
-                #                             f'не начинается ни один город, а на {need[2]} не осталось городов.')
-                #
-                # if need[-1] == 4:
-                #     bot.send_message(tg_id, f'Кажется игра окончена, так как на букву(ы) {need[0].upper()} '
-                #                             f'не начинается ни один город, а на {need[1]} не осталось городов.')
-                #
-                # if need[-1] == 5:
-                #     bot.send_message(tg_id, f'Кажется игра окончена, так как на букву(ы) {need[0].upper()} '
-                #                             f'не начинается ни один город, а на {need[1]} не осталось городов.')
         else:
             return 'not_town'
     else:
         return is_text(input)
-
