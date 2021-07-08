@@ -81,7 +81,8 @@ def human_validity(tg_id, input):
             print('12')
             error = errors['need_letter'][validity]
             need_letter = g.need_letter(input, tg_id)[0]
-            incorrect_letters = g.need_letter(input, tg_id)[1]
+            bot_town = g.usage_check(tg_id, last=True)
+            incorrect_letters = g.need_letter(bot_town, tg_id)[1] # Должен быть город бота, а не город человека
             error_text = error.format('Вам', need_letter, incorrect_letters)
             bot.send_message(tg_id, error_text)
             break
@@ -111,57 +112,109 @@ def bot_first_turn(tg_id):
     g.add_town(bot_town, tg_id)
 
 def bot_turn(tg_id, town):
-    while True:
-        bot_town = g.next_town(town)
-        print(bot_town)
-        expected_error = ''
-        if bot_validity(tg_id, bot_town) == True:
-            if not expected_error:
-                bot.send_message(tg_id, bot_town)
-                g.add_town(bot_town, tg_id)
-                break
-            else:
-                bot.send_message(tg_id, expected_error)
-                bot.send_message(tg_id, bot_town)
-                g.add_town(bot_town, tg_id)
-                break
-        else:
-            expected_error = bot_validity(tg_id, bot_town)
-            if expected_error[-1] == 'end':
-                bot.send_message(tg_id, expected_error[0] + ' Вы победили!')
+    human_town = town
+    need_code = g.need_letter(human_town, tg_id)[-1]
+    flag = True
+    flag1 = True
 
-def bot_validity(tg_id, input):
-    validity = g.validity(tg_id, input)
+    while flag:
+        if need_code == '0':
+            print(1)
+            need_letter = g.need_letter(human_town, tg_id)[0]
 
-    if validity == True:
-        print('QQ')
-        return True
+            while flag1:
+                bot_town = g.town_on_letter(need_letter)
 
-    # if validity in errors.keys():
-    #     return errors[validity]
+                if g.validity(tg_id, bot_town) == True:
+                    bot.send_message(tg_id, bot_town)
+                    g.add_town(bot_town, tg_id)
+                    flag1 = False
 
-    if validity == '1' or validity == '2':
-        error = errors['need_letter'][validity]
-        need_letter = g.need_letter(input, tg_id)[0]
-        incorrect_letters = g.need_letter(input, tg_id)[1]
-        error_text = error.format('мне', need_letter, incorrect_letters)
-        return error_text
+            flag = False
 
-    if validity == '3':
-        print('3')
-        error = errors['need_letter'][validity]
-        need_letter = g.need_letter(input, tg_id)[0]
-        no_dict_letters = g.need_letter(input, tg_id)[1]
-        wrong_letters = g.need_letter(input, tg_id)[2]
-        error_text = error.format('мне', need_letter, no_dict_letters, wrong_letters)
-        return error_text
+        if need_code == '1' or need_code == '2':
+            print(12)
+            need_letter = g.need_letter(human_town, tg_id)[0]
+            wrong_letters = g.need_letter(human_town, tg_id)[1]
+            error_text = errors['need_letter'][need_code].format('мне', need_letter, wrong_letters)
+            bot.send_message(tg_id, error_text)
 
-    if validity == '4' or validity == '5':
-        print('45')
-        error = errors['need_letter'][validity]
-        no_dict_letters = g.need_letter(input, tg_id)[0]
-        wrong_letters = g.need_letter(input, tg_id)[1]
-        error_text = error.format(no_dict_letters, wrong_letters)
-        return error_text, 'end'
+            while flag1:
+                bot_town = g.town_on_letter(need_letter)
+
+                if g.validity(tg_id, bot_town) == True:
+                    bot.send_message(tg_id, bot_town)
+                    g.add_town(bot_town, tg_id)
+                    flag1 = False
+
+            flag = False
+
+        if need_code == '3':
+            print(3)
+            need_letter = g.need_letter(human_town, tg_id)[0]
+            no_dict_letters = g.need_letter(human_town, tg_id)[1]
+            no_town_letters = g.need_letter(human_town, tg_id)[2]
+            error = errors['need_letter']['3']
+            error_text = error.format('мне', need_letter, no_dict_letters, no_town_letters)
+            bot.send_message(tg_id, error_text)
+
+            while flag1:
+                bot_town = g.town_on_letter(need_letter)
+
+                if g.validity(tg_id, bot_town) == True:
+                    bot.send_message(tg_id, bot_town)
+                    g.add_town(bot_town, tg_id)
+                    flag1 = False
+
+            flag = False
+
+        if need_code == '4' or need_code == '5':
+            print(45)
+            no_dict_letters = g.need_letter(human_town, tg_id)[0]
+            no_town_letters = g.need_letter(human_town, tg_id)[1]
+            error_text = errors['need_letter'][need_code].format('мне', no_dict_letters, no_town_letters)
+            bot.send_message(tg_id, error_text)
+
+            flag = False
+
+
+
+# def bot_validity(tg_id, input):
+#     validity = g.validity(tg_id, input)
+#     print(f'validity: {g.validity(tg_id, input)}')
+#
+#     if validity == True:
+#         print('validity=True')
+#         return True
+#
+#     # if validity in errors.keys():
+#     #     return errors[validity]
+#
+#     if validity == '1' or validity == '2':
+#         print('12')
+#         error = errors['need_letter'][validity]
+#         print(input)
+#         human_town = g.usage_check(tg_id, last=True)
+#         need_letter = g.need_letter(human_town, tg_id)[0]
+#         incorrect_letters = g.need_letter(human_town, tg_id)[1] # # Должен быть город человека, а не город бота
+#         error_text = error.format('мне', need_letter, incorrect_letters)
+#         return error_text
+#
+#     if validity == '3':
+#         print('3')
+#         error = errors['need_letter'][validity]
+#         need_letter = g.need_letter(input, tg_id)[0]
+#         no_dict_letters = g.need_letter(input, tg_id)[1]
+#         wrong_letters = g.need_letter(input, tg_id)[2]
+#         error_text = error.format('мне', need_letter, no_dict_letters, wrong_letters)
+#         return error_text
+#
+#     if validity == '4' or validity == '5':
+#         print('45')
+#         error = errors['need_letter'][validity]
+#         no_dict_letters = g.need_letter(input, tg_id)[0]
+#         wrong_letters = g.need_letter(input, tg_id)[1]
+#         error_text = error.format(no_dict_letters, wrong_letters)
+#         return error_text, 'end'
 
 bot.polling(none_stop=True)

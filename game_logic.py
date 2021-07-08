@@ -95,6 +95,14 @@ def usage_check(tg_id, town=None, last=False):
         else:
             return 'first_turn' # Если список названных городов пустой
 
+def last_town(tg_id):
+    '''Возвращает последний город'''
+    with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
+        span1 = f1.read()
+        span2 = span1.split('_')
+        span2.remove('')
+        return span2[-1]
+
 def add_town(town, tg_id):
     '''Записывает город в текстовой файл с названными городами'''
     with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
@@ -158,7 +166,7 @@ def need_letter(town, tg_id):
             if rest_check(l, tg_id=tg_id) != 'all_town_on_letter_used':
                 if rest_check(l, tg_id=tg_id) == True:
                     if not no_dict_letters and not wrong_letters:
-                        return l.lower()
+                        return l.lower(), '0'
                     if no_dict_letters:
                         return l.lower(), no_dict_letters, '1'
                     if wrong_letters:
@@ -173,6 +181,8 @@ def need_letter(town, tg_id):
             no_dict_letters.append(l)
             if len(no_dict_letters + wrong_letters) == len(town):
                 return no_dict_letters, wrong_letters, '5'
+
+# print(need_letter('Керчь', my_id))
 
 def validity(tg_id, input):
     '''Возвращает строку/номер ошибки или True, если ее нет'''
@@ -199,3 +209,8 @@ def validity(tg_id, input):
             return 'not_town'
     else:
         return is_text(input)
+
+def town_on_letter(letter):
+    '''Возвращает случайный город на букву в аргументе'''
+    return random.choice(dict[letter.upper])
+
