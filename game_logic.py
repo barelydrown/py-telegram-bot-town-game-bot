@@ -212,5 +212,8 @@ def validity(tg_id, input):
 
 def town_on_letter(letter):
     '''Возвращает случайный город на букву в аргументе'''
-    return random.choice(dict[letter.upper])
+    upper_letter = letter.upper()
+    return random.choice(dict[upper_letter])
+
+print(town_on_letter('Ч'))
 
