@@ -141,11 +141,11 @@ def bot_turn(tg_id, town):
             error_text = errors['need_letter'][need_code].format('мне', need_letter, wrong_letters)
             bot.send_message(tg_id, error_text)
 
-            while flag1:
+            while flag1: ###БЕСКОНЕЧНЫЙ ЦИКЛ###
                 bot_town = g.town_on_letter(need_letter)
                 print('flag1')
 
-                if g.validity(tg_id, bot_town) == True:
+                if g.validity(tg_id, bot_town) == True: 
                     bot.send_message(tg_id, bot_town)
                     g.add_town(bot_town, tg_id)
                     flag1 = False
