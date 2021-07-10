@@ -108,6 +108,14 @@ def add_town(town, tg_id):
     with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
         f2.write(town.lower() + '_')
 
+def game_progress(tg_id):
+    '''Возвращает список всех использованных городов'''
+    with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
+        span1 = f1.read()
+        span2 = span1.split('_')
+        span2.remove('')
+        return span2
+
 def letter_existence(letter):
     '''Проверяет существование городов, начинающихся на букву, указанную в агрументе'''
     if letter.upper() in dict.keys():
@@ -182,8 +190,6 @@ def need_letter(town, tg_id):
             if len(no_dict_letters + wrong_letters) == len(town):
                 return no_dict_letters, wrong_letters, '5'
 
-# print(need_letter('Керчь', my_id))
-
 def validity(tg_id, input):
     '''Возвращает строку/номер ошибки или True, если ее нет'''
     if is_text(input) == True:
@@ -195,9 +201,11 @@ def validity(tg_id, input):
             if use_check == True:
                 first_letter = input[0].lower()
                 answer = usage_check(tg_id, town=input, last=True)
+                print(f'validity/answer={answer}')
                 need = need_letter(answer, tg_id)
+                print(f'validity/need={need}')
 
-                if need == first_letter:
+                if need[0] == first_letter:
                     return True
 
                 else:
@@ -214,6 +222,3 @@ def town_on_letter(letter):
     '''Возвращает случайный город на букву в аргументе'''
     upper_letter = letter.upper()
     return random.choice(dict[upper_letter])
-
-print(town_on_letter('Ч'))
-

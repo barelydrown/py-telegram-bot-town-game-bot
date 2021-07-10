@@ -2,10 +2,9 @@ import random
 
 import telebot
 import os
-from random import choice
 
 import game_logic as g
-from config import TOKEN, my_id
+from config import TOKEN
 
 errors = {
     'digit':
@@ -21,9 +20,10 @@ errors = {
     ],
     'used_town': 'Кажется этот город уже был...',
     'need_letter': {
-        '1': 'Каежтся {} на {}, так как на букву(ы) {} не начинается ни один город.',
-        '2': 'Кажется {} на {}, так как на букву(ы) {} не осталось городов.',
-        '3': 'Кажется {} на {}, так как на букву(ы) {} '
+        '0': 'Кажется Вам на {}',
+        '1': 'Каежтся {} на {},\n так как на букву(ы) {} не начинается ни один город.',
+        '2': 'Кажется {} на {},\n так как на букву(ы) {} не осталось городов.',
+        '3': 'Кажется {} на {},\n так как на букву(ы) {} '
            'не начинается ни один город, а на {} не осталось городов.',
         '4': 'Кажется игра окончена, так как на букву(ы) {} не начинается ни один город, '
            'а на {} не осталось городов.',
@@ -45,13 +45,53 @@ def start(message):
 
     bot.send_message(mci, 'Давайте поиграем...')
 
-    # r = random.randint(0, 1)
-    r = 1
+    r = random.randint(0, 1)
     if r == 0:
         bot.send_message(mci, 'Я первый.')
         bot_first_turn(mci)
     else:
         bot.send_message(mci, 'Вы первый.')
+
+def need_letter_help(tg_id, town, bot=False):
+    event_code = g.need_letter(town, tg_id)[-1]
+    sample_message = errors['need_letter'][event_code]
+    pronoun = 'Вам'
+
+    if bot == True:
+        pronoun = 'мне'
+
+    if event_code == '0':
+        need_letter = g.need_letter(town, tg_id)[0].upper()
+        help_message = sample_message.format(need_letter)
+        return help_message
+
+    if event_code == '1' or event_code == '2':
+        need_letter = g.need_letter(town, tg_id)[0].upper()
+        wrong_letters = g.need_letter(town, tg_id)[1]
+        help_message = sample_message.format(pronoun, need_letter, wrong_letters)
+        return help_message
+
+    if event_code == '3':
+        need_letter = g.need_letter(town, tg_id)[0].upper()
+        no_dict_letters = g.need_letter(town, tg_id)[1]
+        no_town_letters = g.need_letter(town, tg_id)[2]
+        help_message = sample_message.format(pronoun, need_letter, no_dict_letters, no_town_letters)
+        return help_message
+
+    if event_code == '4' or event_code == '5':
+        no_dict_letters = g.need_letter(town, tg_id)[0]
+        no_town_letters = g.need_letter(town, tg_id)[1]
+        help_message = sample_message.format(no_dict_letters, no_town_letters)
+        return help_message
+
+@bot.message_handler(commands=['progress'])
+def show_game_progress(message):
+    used_towns = g.game_progress(message.chat.id)
+    game_progress_message = ''
+    for town in used_towns:
+        game_progress_message += f'{town.title()}\n'
+
+    bot.send_message(message.chat.id, f'Ход игры: \n\n{game_progress_message}')
 
 @bot.message_handler(content_types=['text'])
 def human_turn(message):
@@ -64,8 +104,8 @@ def human_validity(tg_id, input):
 
     while True:
         if validity == True:
+            print('g.validity=True')
             g.add_town(input, tg_id)
-            print('QQ')
             bot_turn(tg_id, input)
             break
 
@@ -74,37 +114,31 @@ def human_validity(tg_id, input):
             break
 
         if validity in errors.keys():
-            print('ZZZ')
             bot.send_message(tg_id, errors[validity])
             break
 
+        if validity == '0':
+            last_town = g.usage_check(tg_id, town=input, last=True)
+            help_message = need_letter_help(tg_id, last_town)
+            bot.send_message(tg_id, help_message)
+            break
+
         if validity == '1' or validity == '2':
-            print('12')
-            error = errors['need_letter'][validity]
-            need_letter = g.need_letter(input, tg_id)[0]
-            bot_town = g.usage_check(tg_id, last=True)
-            incorrect_letters = g.need_letter(bot_town, tg_id)[1] # Должен быть город бота, а не город человека
-            error_text = error.format('Вам', need_letter, incorrect_letters)
-            bot.send_message(tg_id, error_text)
+            last_town = g.usage_check(tg_id, town=input, last=True)
+            help_message = need_letter_help(tg_id, last_town)
+            bot.send_message(tg_id, help_message)
             break
 
         if validity == '3':
-            print('3')
-            error = errors['need_letter'][validity]
-            need_letter = g.need_letter(input, tg_id)[0]
-            no_dict_letters = g.need_letter(input, tg_id)[1]
-            wrong_letters = g.need_letter(input, tg_id)[2]
-            error_text = error.format('Вам', need_letter, no_dict_letters, wrong_letters)
-            bot.send_message(tg_id, error_text)
+            last_town = g.usage_check(tg_id, town=input, last=True)
+            help_message = need_letter_help(tg_id, last_town)
+            bot.send_message(tg_id, help_message)
             break
 
         if validity == '4' or validity == '5':
-            print('45')
-            error = errors['need_letter'][validity]
-            no_dict_letters = g.need_letter(input, tg_id)[0]
-            wrong_letters = g.need_letter(input, tg_id)[1]
-            error_text = error.format(no_dict_letters, wrong_letters)
-            bot.send_message(tg_id, error_text)
+            last_town = g.usage_check(tg_id, town=input, last=True)
+            help_message = need_letter_help(tg_id, last_town)
+            bot.send_message(tg_id, help_message)
             break
 
 def bot_first_turn(tg_id):
@@ -112,112 +146,50 @@ def bot_first_turn(tg_id):
     bot.send_message(tg_id, bot_town)
     g.add_town(bot_town, tg_id)
 
-def bot_turn(tg_id, town):
-    human_town = town
-    need_code = g.need_letter(human_town, tg_id)[-1]
-    flag = True
-    flag1 = True
+def bot_try(tg_id, letter):
+    while True:
+        bot_town = g.town_on_letter(letter)
 
-    while flag:
-        if need_code == '0':
-            print(1)
+        if g.usage_check(tg_id, town=bot_town) == True:
+            return bot_town
+
+def bot_turn(tg_id, human_town):
+    event_code = g.need_letter(human_town, tg_id)[-1]
+
+    while True:
+        if event_code == '0':
             need_letter = g.need_letter(human_town, tg_id)[0]
+            bot_town = bot_try(tg_id, need_letter)
+            g.add_town(bot_town, tg_id)
+            bot.send_message(tg_id, bot_town)
+            break
 
-            while flag1:
-                bot_town = g.town_on_letter(need_letter)
 
-                if g.validity(tg_id, bot_town) == True:
-                    bot.send_message(tg_id, bot_town)
-                    g.add_town(bot_town, tg_id)
-                    flag1 = False
+        if event_code == '1' or event_code == '2':
+            help_message = need_letter_help(tg_id, human_town, bot=True)
+            bot.send_message(tg_id, help_message)
 
-            flag = False
-
-        if need_code == '1' or need_code == '2':
-            print(12)
             need_letter = g.need_letter(human_town, tg_id)[0]
-            wrong_letters = g.need_letter(human_town, tg_id)[1]
-            bot.send_message(tg_id, wrong_letters)
-            error_text = errors['need_letter'][need_code].format('мне', need_letter, wrong_letters)
-            bot.send_message(tg_id, error_text)
+            bot_town = bot_try(tg_id, need_letter)
+            g.add_town(bot_town, tg_id)
+            bot.send_message(tg_id, bot_town)
+            break
 
-            while flag1: ###БЕСКОНЕЧНЫЙ ЦИКЛ###
-                bot_town = g.town_on_letter(need_letter)
-                print('flag1')
 
-                if g.validity(tg_id, bot_town) == True: 
-                    bot.send_message(tg_id, bot_town)
-                    g.add_town(bot_town, tg_id)
-                    flag1 = False
+        if event_code == '3':
+            help_message = need_letter_help(tg_id, human_town, bot=True)
+            bot.send_message(tg_id, help_message)
 
-            flag = False
-
-        if need_code == '3':
-            print(3)
             need_letter = g.need_letter(human_town, tg_id)[0]
-            no_dict_letters = g.need_letter(human_town, tg_id)[1]
-            no_town_letters = g.need_letter(human_town, tg_id)[2]
-            error = errors['need_letter']['3']
-            error_text = error.format('мне', need_letter, no_dict_letters, no_town_letters)
-            bot.send_message(tg_id, error_text)
-
-            while flag1:
-                bot_town = g.town_on_letter(need_letter)
-
-                if g.validity(tg_id, bot_town) == True:
-                    bot.send_message(tg_id, bot_town)
-                    g.add_town(bot_town, tg_id)
-                    flag1 = False
-
-            flag = False
-
-        if need_code == '4' or need_code == '5':
-            print(45)
-            no_dict_letters = g.need_letter(human_town, tg_id)[0]
-            no_town_letters = g.need_letter(human_town, tg_id)[1]
-            error_text = errors['need_letter'][need_code].format('мне', no_dict_letters, no_town_letters)
-            bot.send_message(tg_id, error_text)
-
-            flag = False
+            bot_town = bot_try(tg_id, need_letter)
+            g.add_town(bot_town, tg_id)
+            bot.send_message(tg_id, bot_town)
+            break
 
 
-
-# def bot_validity(tg_id, input):
-#     validity = g.validity(tg_id, input)
-#     print(f'validity: {g.validity(tg_id, input)}')
-#
-#     if validity == True:
-#         print('validity=True')
-#         return True
-#
-#     # if validity in errors.keys():
-#     #     return errors[validity]
-#
-#     if validity == '1' or validity == '2':
-#         print('12')
-#         error = errors['need_letter'][validity]
-#         print(input)
-#         human_town = g.usage_check(tg_id, last=True)
-#         need_letter = g.need_letter(human_town, tg_id)[0]
-#         incorrect_letters = g.need_letter(human_town, tg_id)[1] # # Должен быть город человека, а не город бота
-#         error_text = error.format('мне', need_letter, incorrect_letters)
-#         return error_text
-#
-#     if validity == '3':
-#         print('3')
-#         error = errors['need_letter'][validity]
-#         need_letter = g.need_letter(input, tg_id)[0]
-#         no_dict_letters = g.need_letter(input, tg_id)[1]
-#         wrong_letters = g.need_letter(input, tg_id)[2]
-#         error_text = error.format('мне', need_letter, no_dict_letters, wrong_letters)
-#         return error_text
-#
-#     if validity == '4' or validity == '5':
-#         print('45')
-#         error = errors['need_letter'][validity]
-#         no_dict_letters = g.need_letter(input, tg_id)[0]
-#         wrong_letters = g.need_letter(input, tg_id)[1]
-#         error_text = error.format(no_dict_letters, wrong_letters)
-#         return error_text, 'end'
+        if event_code == '4' or event_code == '5':
+            help_message = need_letter_help(tg_id, human_town, bot=True)
+            bot.send_message(tg_id, help_message)
+            break
 
 bot.polling(none_stop=True)
