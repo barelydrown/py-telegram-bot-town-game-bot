@@ -122,21 +122,24 @@ def letter_existence(letter):
         return True
 
 def rest_check(letter, tg_id):
-    '''Проверяет остались ли еще слова на данную букву'''
+    '''Проверяет остались ли еще города на данную букву'''
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f4:
         span1 = f4.read()
         used_towns = span1.split('_')
         used_towns.remove('')
+        used_towns_up = []
+        for to in used_towns:
+            used_towns_up.append(to.title())
 
     used_dict = {}
     first_letters = []
-    for t in used_towns: # Создает список всех первых букв использованных городов
+    for t in used_towns_up: # Создает список всех первых букв использованных городов
         first_letters.append(t[0])
 
     for l in set(first_letters): # Добавляет в словарь ключи (первые буквы всех использованных городов)
         used_dict[l] = []
 
-    for t in used_towns: # Формирует словарь использованных городов
+    for t in used_towns_up: # Формирует словарь использованных городов
         f_l = t[0]
         used_dict[f_l].append(t)
 
@@ -176,11 +179,11 @@ def need_letter(town, tg_id):
                     if not no_dict_letters and not wrong_letters:
                         return l.lower(), '0'
                     if no_dict_letters:
-                        return l.lower(), no_dict_letters, '1'
+                        return l.lower(), wrong_trans(no_dict_letters), '1'
                     if wrong_letters:
-                        return l.lower(), wrong_letters, '2'
+                        return l.lower(), wrong_trans(wrong_letters), '2'
                     else:
-                        return l.lower(), no_dict_letters, wrong_letters, '3'
+                        return l.lower(), wrong_trans(no_dict_letters), wrong_trans(wrong_letters), '3'
             else:
                 wrong_letters.append(l)
                 if len(no_dict_letters + wrong_letters) == len(town):
@@ -201,9 +204,7 @@ def validity(tg_id, input):
             if use_check == True:
                 first_letter = input[0].lower()
                 answer = usage_check(tg_id, town=input, last=True)
-                print(f'validity/answer={answer}')
                 need = need_letter(answer, tg_id)
-                print(f'validity/need={need}')
 
                 if need[0] == first_letter:
                     return True
@@ -217,6 +218,17 @@ def validity(tg_id, input):
             return 'not_town'
     else:
         return is_text(input)
+
+def wrong_trans(letter_list):
+    '''Превращает список неверных букв в строку с запятыми'''
+    new_string = ''
+    if len(letter_list) <= 1:
+        new_string = f'*{letter_list[0].upper()}*'
+    else:
+        for letter in letter_list:
+            new_string += f'*{letter.upper()}*' + ', '
+
+    return new_string
 
 def town_on_letter(letter):
     '''Возвращает случайный город на букву в аргументе'''
