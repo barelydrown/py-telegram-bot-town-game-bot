@@ -1,5 +1,5 @@
 import random
-from string import ascii_lowercase, digits
+from string import digits
 import json
 
 import dict_init
@@ -7,30 +7,23 @@ from config import my_id
 
 dict = dict_init.RU_TOWNS_DICT
 all_towns_list = dict_init.RU_TOWNS_LIST
-punctuation = ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '.', ':', ';', '<', '=', '>', '?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~']
+punctuation = dict_init.PUNCTUATION
 
 #dict = {'Ф': ['Фатеж', 'Феодосия', 'Фокино', 'Фролово', 'Фрязино', 'Фурманов'], 'О': ["Омск", 'Ольгинск'], 'Х': ['Хорус']}
 
 def is_text(input):
     '''
     Аргументом может быть только строка.
-    Проверяет строку на наличие цифр, спец. сиимволов и латинских букв.
+    Проверяет строку на наличие цифр  и сиимволов.
     Возвращает True или название ошибки.
     '''
-    error = ''
-
     for s in list(input):
         if s in list(digits):
-            error = 'digit'
+            return 'digit'
         if s in punctuation:
-            error = 'punctuation'
-        if s in list(ascii_lowercase):
-            error = 'eng'
-
-    if error:
-        return error
-    else:
-        return True
+            return 'punctuation'
+        else:
+            return True
 
 def rand_town():
     '''Возвращает случайный город'''
@@ -223,10 +216,10 @@ def wrong_trans(letter_list):
     '''Превращает список неверных букв в строку с запятыми'''
     new_string = ''
     if len(letter_list) <= 1:
-        new_string = f'*{letter_list[0].upper()}*'
+        new_string = f'{letter_list[0].upper()}'
     else:
         for letter in letter_list:
-            new_string += f'*{letter.upper()}*' + ', '
+            new_string += f'{letter.upper()}' + ', '
 
     return new_string
 

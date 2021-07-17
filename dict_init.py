@@ -15,3 +15,6 @@ with open('dicts/ru_cities_list.json', 'r') as f2:
     Формат: [город, город, город]
     Пример: ['азов', 'ак-довурак', 'аксай']
     '''
+
+with open('dicts/punctuation.json', 'r') as f3:
+    PUNCTUATION = json.load(f3)

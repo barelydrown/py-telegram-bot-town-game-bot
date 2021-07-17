@@ -1,6 +1,7 @@
 import random
 
 import telebot
+from telebot import types
 import os
 
 import game_logic as g
@@ -10,9 +11,7 @@ errors = {
     'digit':
         'Мы же в города играем. В вашем ответе не должно быть цифр.',
     'punctuation':
-        'Мы же в города играем. В вашем ответе не должно быть спец. символов (кроме "-")',
-    'eng':
-        'Мы играем в города РФ. В вашем ответе не должно быть латинских символов',
+        'Мы же в города играем. В вашем ответе не должно быть символов _(кроме дефиса)_',
     'not_town': [
         'Такого города нет в моей базе...',
         'Не знаю такого города...',
@@ -20,42 +19,45 @@ errors = {
     ],
     'used_town': 'Кажется этот город уже был...',
     'need_letter': {
-        '0': 'Кажется Вам на {}',
-        '1': 'Каежтся {} на {},\n так как на букву(ы) {} не начинается ни один город.',
-        '2': 'Кажется {} на {},\n так как на букву(ы) {} не осталось городов.',
-        '3': 'Кажется {} на {},\n так как на букву(ы) {} '
-           'не начинается ни один город, а на {} не осталось городов.',
-        '4': 'Кажется игра окончена, так как на букву(ы) {} не начинается ни один город, '
-           'а на {} не осталось городов.',
-        '5': 'Кажется игра окончена, так как на букву(ы) {} не начинается ни один город, '
-           'а на {} не осталось городов.',
+        '0': 'Кажется Вам на *{}*',
+        '1': 'Каежтся {} на *{}*, \nтак как на букв{} *{}* не начинается ни один город.',
+        '2': 'Кажется {} на *{}*, \nтак как на букв{} *{}* не осталось городов.',
+        '3': 'Кажется {} на *{}*, \nтак как на букву{} *{}* '
+           'не начинается ни один город, а на *{}* не осталось городов.',
+        '4': 'Кажется игра окончена, так как на *{}* не начинается ни один город, '
+           'а на *{}* не осталось городов.',
+        '5': 'Кажется игра окончена, так как на *{}* не начинается ни один город, '
+           'а на *{}* не осталось городов.',
     }
 }
 
+test_url = 'https://geogoroda.ru'
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    mci = message.chat.id
-    if not os.path.isdir(f'users/{mci}'):
-        os.mkdir(f'users/{mci}')
+    tg_id = message.chat.id
+    if not os.path.isdir(f'users/{tg_id}'):
+        os.mkdir(f'users/{tg_id}')
 
-    with open(f'users/{mci}/used_towns.txt', 'w') as f:
+    with open(f'users/{tg_id}/used_towns.txt', 'w') as f:
         pass
 
-    bot.send_message(mci, 'Давайте поиграем...')
+    bot.send_message(tg_id, 'Давайте поиграем...')
 
-    r = random.randint(0, 1)
+    # r = random.randint(0, 1)
+    r = 0
     if r == 0:
-        bot.send_message(mci, 'Я первый.')
-        bot_first_turn(mci)
+        bot.send_message(tg_id, 'Я первый')
+        bot_first_turn(tg_id)
     else:
-        bot.send_message(mci, 'Вы первый.')
+        bot.send_message(tg_id, 'Вы первый')
 
 def need_letter_help(tg_id, town, bot=False):
     event_code = g.need_letter(town, tg_id)[-1]
     sample_message = errors['need_letter'][event_code]
     pronoun = 'Вам'
+    letter_end = 'у'
 
     if bot == True:
         pronoun = 'мне'
@@ -68,7 +70,11 @@ def need_letter_help(tg_id, town, bot=False):
     if event_code == '1' or event_code == '2':
         need_letter = g.need_letter(town, tg_id)[0].upper()
         wrong_letters = g.need_letter(town, tg_id)[1]
-        help_message = sample_message.format(pronoun, need_letter, wrong_letters)
+
+        if len(wrong_letters) > 1:
+            letter_end = 'ы'
+
+        help_message = sample_message.format(pronoun, need_letter, letter_end, wrong_letters)
         return help_message
 
     if event_code == '3':
@@ -104,7 +110,6 @@ def human_validity(tg_id, input):
 
     while True:
         if validity == True:
-            print('g.validity=True')
             g.add_town(input, tg_id)
             bot_turn(tg_id, input)
             break
@@ -114,37 +119,43 @@ def human_validity(tg_id, input):
             break
 
         if validity in errors.keys():
-            bot.send_message(tg_id, errors[validity])
+            bot.send_message(tg_id, errors[validity], parse_mode='Markdown')
             break
 
         if validity == '0':
             last_town = g.usage_check(tg_id, town=input, last=True)
             help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message)
+            print(help_message)
+            bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
         if validity == '1' or validity == '2':
             last_town = g.usage_check(tg_id, town=input, last=True)
             help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message)
+            bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
         if validity == '3':
             last_town = g.usage_check(tg_id, town=input, last=True)
             help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message)
+            bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
         if validity == '4' or validity == '5':
             last_town = g.usage_check(tg_id, town=input, last=True)
             help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message)
+            bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
 def bot_first_turn(tg_id):
     bot_town = g.rand_town()
-    bot.send_message(tg_id, bot_town)
     g.add_town(bot_town, tg_id)
+    bot.send_message(tg_id, f'[{bot_town}]({test_url})', parse_mode='Markdown', disable_web_page_preview=True)
+
+    next_letter = g.need_letter(bot_town, tg_id)[0]
+    if next_letter != bot_town[-1]:
+        help_message = need_letter_help(tg_id, bot_town)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
 def bot_try(tg_id, letter):
     while True:
@@ -162,12 +173,17 @@ def bot_turn(tg_id, human_town):
             bot_town = bot_try(tg_id, need_letter)
             g.add_town(bot_town, tg_id)
             bot.send_message(tg_id, bot_town)
+
+            next_letter = g.need_letter(bot_town, tg_id)[0]
+            if next_letter != bot_town[-1]:
+                help_message = need_letter_help(tg_id, bot_town)
+                bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
 
         if event_code == '1' or event_code == '2':
             help_message = need_letter_help(tg_id, human_town, bot=True)
-            bot.send_message(tg_id, help_message)
+            bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
             need_letter = g.need_letter(human_town, tg_id)[0]
             bot_town = bot_try(tg_id, need_letter)
@@ -178,7 +194,7 @@ def bot_turn(tg_id, human_town):
 
         if event_code == '3':
             help_message = need_letter_help(tg_id, human_town, bot=True)
-            bot.send_message(tg_id, help_message)
+            bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
             need_letter = g.need_letter(human_town, tg_id)[0]
             bot_town = bot_try(tg_id, need_letter)
@@ -189,7 +205,7 @@ def bot_turn(tg_id, human_town):
 
         if event_code == '4' or event_code == '5':
             help_message = need_letter_help(tg_id, human_town, bot=True)
-            bot.send_message(tg_id, help_message)
+            bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
 bot.polling(none_stop=True)
