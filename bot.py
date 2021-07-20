@@ -34,6 +34,11 @@ errors = {
 test_url = 'https://geogoroda.ru'
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
 
+markup_class = types.ReplyKeyboardMarkup()
+btn_startgame = types.KeyboardButton(text='Играть')
+markup_class.add(btn_startgame)
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     tg_id = message.chat.id
@@ -150,7 +155,8 @@ def human_validity(tg_id, input):
 def bot_first_turn(tg_id):
     bot_town = g.rand_town()
     g.add_town(bot_town, tg_id)
-    bot.send_message(tg_id, f'[{bot_town}]({test_url})', parse_mode='Markdown', disable_web_page_preview=True)
+    town_link = g.get_link(bot_town)
+    bot.send_message(tg_id, f'[{bot_town}]({town_link})', parse_mode='Markdown', disable_web_page_preview=True)
 
     next_letter = g.need_letter(bot_town, tg_id)[0]
     if next_letter != bot_town[-1]:
@@ -172,7 +178,8 @@ def bot_turn(tg_id, human_town):
             need_letter = g.need_letter(human_town, tg_id)[0]
             bot_town = bot_try(tg_id, need_letter)
             g.add_town(bot_town, tg_id)
-            bot.send_message(tg_id, bot_town)
+            town_link = g.get_link(bot_town)
+            bot.send_message(tg_id, f'[{bot_town}]({town_link})', parse_mode='Markdown', disable_web_page_preview=True)
 
             next_letter = g.need_letter(bot_town, tg_id)[0]
             if next_letter != bot_town[-1]:
@@ -188,7 +195,8 @@ def bot_turn(tg_id, human_town):
             need_letter = g.need_letter(human_town, tg_id)[0]
             bot_town = bot_try(tg_id, need_letter)
             g.add_town(bot_town, tg_id)
-            bot.send_message(tg_id, bot_town)
+            town_link = g.get_link(bot_town)
+            bot.send_message(tg_id, f'[{bot_town}]({town_link})', parse_mode='Markdown', disable_web_page_preview=True)
             break
 
 
@@ -199,7 +207,8 @@ def bot_turn(tg_id, human_town):
             need_letter = g.need_letter(human_town, tg_id)[0]
             bot_town = bot_try(tg_id, need_letter)
             g.add_town(bot_town, tg_id)
-            bot.send_message(tg_id, bot_town)
+            town_link = g.get_link(bot_town)
+            bot.send_message(tg_id, f'[{bot_town}]({town_link})', parse_mode='Markdown', disable_web_page_preview=True)
             break
 
 

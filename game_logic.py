@@ -8,6 +8,7 @@ from config import my_id
 dict = dict_init.RU_TOWNS_DICT
 all_towns_list = dict_init.RU_TOWNS_LIST
 punctuation = dict_init.PUNCTUATION
+links = dict_init.LINKS
 
 #dict = {'Ф': ['Фатеж', 'Феодосия', 'Фокино', 'Фролово', 'Фрязино', 'Фурманов'], 'О': ["Омск", 'Ольгинск'], 'Х': ['Хорус']}
 
@@ -227,3 +228,9 @@ def town_on_letter(letter):
     '''Возвращает случайный город на букву в аргументе'''
     upper_letter = letter.upper()
     return random.choice(dict[upper_letter])
+
+def get_link(town):
+    try:
+        return links[town.lower()]
+    except:
+        return None
