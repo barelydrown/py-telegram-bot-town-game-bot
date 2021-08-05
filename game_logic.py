@@ -12,7 +12,7 @@ punctuation = dict_init.PUNCTUATION
 errors = dict_init.errors
 
 def get_data(tg_id):
-    '''Определяет режим выбранный режим игры и озвращает необходимые данные'''
+    '''Определяет режим игры и возвращает необходимые данные'''
     with open(f'users/{tg_id}/cfg.txt', 'r') as f1:
         mode = f1.read()
     if mode == 'ru': # Города РФ
@@ -21,7 +21,7 @@ def get_data(tg_id):
         links = dict_init.LINKS
         return dict, all_towns_list, links, 'ru'
 
-    if mode == 'world': # Города мира
+    if mode == 'world': # Города мира, нормальный
         dict = dict_init.TOWNS_DICT
         all_towns_list = dict_init.TOWNS_LIST
         links = None
@@ -49,7 +49,6 @@ def is_text(input):
 
 def rand_town(tg_id):
     '''Возвращает случайный город'''
-    print('rand_town')
     dict = get_data(tg_id)[0]
     keys = []
     for letter in dict.keys():
@@ -64,7 +63,6 @@ def next_town(tg_id, town):
     Возвращает случайный город, который начинается на последнюю
     букву города в аргументе.
     '''
-    print('next_town')
     dict = get_data(tg_id)[0]
     letters_len = len(town)
     mod_town = town
@@ -89,7 +87,6 @@ def town_validity(tg_id, input_town):
 
 def letter_validity(town, input_town):
     '''Проверяет введен ли город с нужной буквы'''
-    print('letter_validity')
     need_letter = town[-1].lower()
     if input_town[0].lower() == need_letter:
         return True
@@ -101,7 +98,6 @@ def usage_check(tg_id, town=None, last=False):
     Если список не пустой, проверяет был ли уже назван город.
     Если параметр last=True, возвращает последний названный город.
     '''
-    print('usage_check')
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
         span1 = f1.read()
         span2 = span1.split('_')
@@ -120,7 +116,6 @@ def usage_check(tg_id, town=None, last=False):
 
 def last_town(tg_id):
     '''Возвращает последний город'''
-    print('last_town')
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
         span1 = f1.read()
         span2 = span1.split('_')
@@ -129,7 +124,6 @@ def last_town(tg_id):
 
 def add_town(town, tg_id):
     '''Записывает город в текстовой файл с названными городами'''
-    print('add_town')
     with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
         f2.write(town.lower() + '_')
 
@@ -144,14 +138,12 @@ def game_progress(tg_id):
 def letter_existence(tg_id, letter):
     '''Проверяет существование городов,
     начинающихся на букву, указанную в агрументе'''
-    print('letter_existence')
     dict = get_data(tg_id)[0]
     if letter.upper() in dict.keys():
         return True
 
 def rest_check(letter, tg_id):
     '''Проверяет остались ли еще города на данную букву'''
-    print('rest_check')
     dict = get_data(tg_id)[0]
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f4:
         span1 = f4.read()

@@ -14,14 +14,12 @@ bot = telebot.TeleBot(TOKEN, parse_mode=None)
 @bot.message_handler(commands=['start'])
 def start(message):
     tg_id = message.chat.id
-
     if not os.path.isdir(f'users/{tg_id}'):
         os.mkdir(f'users/{tg_id}')
 
     markup_reply = types.ReplyKeyboardMarkup(resize_keyboard=True,
                                              one_time_keyboard=True,
                                              input_field_placeholder=g.rif)
-
     towns_ru = types.KeyboardButton('Города 🇷🇺')
     towns_world = types.KeyboardButton('Города 🌎')
     markup_reply.add(towns_ru, towns_world)
@@ -38,7 +36,6 @@ def show_game_progress(message):
     game_progress_message = ''
     for town in used_towns:
         game_progress_message += f'{town.title()}\n'
-
     bot.send_message(message.chat.id, f'Ход игры: \n\n{game_progress_message}')
 
 @bot.message_handler(regexp='Города 🇷🇺')
