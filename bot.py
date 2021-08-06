@@ -8,17 +8,18 @@ import game_logic as g
 from config import TOKEN
 
 errors = g.errors
-
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    """Создает папку для пользователя. Выводит на экран кнопки режимов игры"""
     tg_id = message.chat.id
     if not os.path.isdir(f'users/{tg_id}'):
         os.mkdir(f'users/{tg_id}')
 
     markup_reply = types.ReplyKeyboardMarkup(resize_keyboard=True,
-                                             one_time_keyboard=True,
+                                             one_time_keyboard=False,
                                              input_field_placeholder=g.rif)
     towns_ru = types.KeyboardButton('Города 🇷🇺')
     towns_world = types.KeyboardButton('Города 🌎')
@@ -26,51 +27,41 @@ def start(message):
     bot.send_message(tg_id, g.start_message,
                      parse_mode='Markdown', reply_markup=markup_reply)
 
+
 @bot.message_handler(commands=['rules', 'r'])
 def show_rules(message):
     bot.send_message(message.chat.id, g.rules, parse_mode='Markdown')
 
+
 @bot.message_handler(commands=['progress'])
 def show_game_progress(message):
+    """Отправляет сообщение с ходом игры"""
     used_towns = g.game_progress(message.chat.id)
     game_progress_message = ''
     for town in used_towns:
         game_progress_message += f'{town.title()}\n'
     bot.send_message(message.chat.id, f'Ход игры: \n\n{game_progress_message}')
 
+
 @bot.message_handler(regexp='Города 🇷🇺')
 def ru_mode(message):
     tg_id = message.chat.id
     with open(f'users/{tg_id}/used_towns.txt', 'w') as f:
         pass
-    with open(f'users/{tg_id}/cfg.txt', 'w') as f:
-        f.write('ru')
+    with open(f'users/{tg_id}/cfg.txt', 'w') as f1:
+        f1.write('ru')
     first_turn(tg_id)
+
 
 @bot.message_handler(regexp='Города 🌎')
 def world_mode(message):
     tg_id = message.chat.id
     with open(f'users/{tg_id}/used_towns.txt', 'w') as f:
         pass
-    markup_level = types.InlineKeyboardMarkup()
-    level = types.InlineKeyboardButton(text='Обычный', callback_data='normal')
-    level0 = types.InlineKeyboardButton(text='Лёгкий', callback_data='ez')
-    markup_level.add(level, level0)
-    bot.send_message(tg_id, 'Выберите уровень сложности',
-                     reply_markup=markup_level)
-
-@bot.callback_query_handler(func=lambda call: True)
-def level_choice(call):
-    tg_id = call.message.chat.id
-    if call.data == 'normal':
-        with open(f'users/{tg_id}/cfg.txt', 'w') as f:
-            f.write('world')
-
-    if call.data == 'ez':
-        with open(f'users/{tg_id}/cfg.txt', 'w') as f:
-            f.write('world0')
-
+    with open(f'users/{tg_id}/cfg.txt', 'w') as f1:
+        f1.write('world')
     first_turn(tg_id)
+
 
 @bot.message_handler(content_types=['text'])
 def human_turn(message):
@@ -78,6 +69,7 @@ def human_turn(message):
         input = message.text
         tg_id = message.chat.id
         human_validity(tg_id, input)
+
 
 def first_turn(tg_id):
     bot.send_message(tg_id, 'Сыграем?')
@@ -87,6 +79,7 @@ def first_turn(tg_id):
         bot_first_turn(tg_id)
     else:
         bot.send_message(tg_id, 'Вы первый')
+
 
 def need_letter_help(tg_id, town, bot=False):
     '''Возвращает строку ошибки в отредактированном формате'''
@@ -125,6 +118,7 @@ def need_letter_help(tg_id, town, bot=False):
         no_town_letters = g.need_letter(town, tg_id)[1]
         help_message = sample_message.format(no_dict_letters, no_town_letters)
         return help_message
+
 
 def human_validity(tg_id, input):
     validity = g.validity(tg_id, input)
@@ -168,6 +162,7 @@ def human_validity(tg_id, input):
             bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
+
 def bot_first_turn(tg_id):
     bot_town = g.rand_town(tg_id)
     g.add_town(bot_town, tg_id)
@@ -180,12 +175,14 @@ def bot_first_turn(tg_id):
         help_message = need_letter_help(tg_id, bot_town)
         bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
+
 def bot_try(tg_id, letter):
     while True:
         bot_town = g.town_on_letter(tg_id, letter)
 
         if g.usage_check(tg_id, town=bot_town) == True:
             return bot_town
+
 
 def bot_turn(tg_id, human_town):
     event_code = g.need_letter(human_town, tg_id)[-1]

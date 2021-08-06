@@ -1,6 +1,5 @@
 import random
 from string import digits
-import json
 
 import dict_init
 from config import my_id
@@ -11,8 +10,9 @@ rules = dict_init.rules
 punctuation = dict_init.PUNCTUATION
 errors = dict_init.errors
 
+
 def get_data(tg_id):
-    '''Определяет режим игры и возвращает необходимые данные'''
+    """Определяет режим игры и возвращает необходимые данные"""
     with open(f'users/{tg_id}/cfg.txt', 'r') as f1:
         mode = f1.read()
     if mode == 'ru': # Города РФ
@@ -33,12 +33,13 @@ def get_data(tg_id):
         links = None
         return dict, all_towns_list, links, 'world0'
 
+
 def is_text(input):
-    '''
+    """
     Аргументом может быть только строка.
     Проверяет строку на наличие цифр  и сиимволов.
     Возвращает True или название ошибки.
-    '''
+    """
     for s in list(input):
         if s in list(digits):
             return 'digit'
@@ -47,8 +48,9 @@ def is_text(input):
         else:
             return True
 
+
 def rand_town(tg_id):
-    '''Возвращает случайный город'''
+    """Возвращает случайный город"""
     dict = get_data(tg_id)[0]
     keys = []
     for letter in dict.keys():
@@ -58,11 +60,12 @@ def rand_town(tg_id):
     rand_town = random.choice(dict[rand_letter])
     return rand_town
 
+
 def next_town(tg_id, town):
-    '''
+    """
     Возвращает случайный город, который начинается на последнюю
     букву города в аргументе.
-    '''
+    """
     dict = get_data(tg_id)[0]
     letters_len = len(town)
     mod_town = town
@@ -78,26 +81,28 @@ def next_town(tg_id, town):
             mod_town.remove(mod_town[-1])
             mod_town = ''.join(mod_town)
 
+
 def town_validity(tg_id, input_town):
-    '''Проверяет существование города в базе'''
-    print('towns_validity')
+    """Проверяет существование города в базе"""
     all_towns_list = get_data(tg_id)[1]
     if input_town.lower() in all_towns_list:
         return True
 
+
 def letter_validity(town, input_town):
-    '''Проверяет введен ли город с нужной буквы'''
+    """Проверяет введен ли город с нужной буквы"""
     need_letter = town[-1].lower()
     if input_town[0].lower() == need_letter:
         return True
 
+
 def usage_check(tg_id, town=None, last=False):
-    '''
+    """
     Открывает список названных городов. Если список пустой,
     возвращает соответсвующую строку сценария.
     Если список не пустой, проверяет был ли уже назван город.
     Если параметр last=True, возвращает последний названный город.
-    '''
+    """
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
         span1 = f1.read()
         span2 = span1.split('_')
@@ -114,26 +119,30 @@ def usage_check(tg_id, town=None, last=False):
         else:
             return 'first_turn' # Если список названных городов пустой
 
+
 def last_town(tg_id):
-    '''Возвращает последний город'''
+    """Возвращает последний город"""
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
         span1 = f1.read()
         span2 = span1.split('_')
         span2.remove('')
         return span2[-1]
 
+
 def add_town(town, tg_id):
-    '''Записывает город в текстовой файл с названными городами'''
+    """Записывает город в текстовой файл с названными городами"""
     with open(f'users/{tg_id}/used_towns.txt', 'a', encoding='utf-8') as f2:
         f2.write(town.lower() + '_')
 
+
 def game_progress(tg_id):
-    '''Возвращает список всех использованных городов'''
+    """Возвращает список всех использованных городов"""
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f1:
         span1 = f1.read()
         span2 = span1.split('_')
         span2.remove('')
         return span2
+
 
 def letter_existence(tg_id, letter):
     '''Проверяет существование городов,
@@ -142,8 +151,9 @@ def letter_existence(tg_id, letter):
     if letter.upper() in dict.keys():
         return True
 
+
 def rest_check(letter, tg_id):
-    '''Проверяет остались ли еще города на данную букву'''
+    """Проверяет остались ли еще города на данную букву"""
     dict = get_data(tg_id)[0]
     with open(f'users/{tg_id}/used_towns.txt', 'r', encoding='utf-8') as f4:
         span1 = f4.read()
@@ -177,7 +187,7 @@ def rest_check(letter, tg_id):
         return 'no_letter_dict' # Если буквы нет в словаре
 
 def need_letter(town, tg_id):
-    '''
+    """
     Возвращает нужную букву или строку ошибки.
 
     Если на последнюю букву input_town не начинается ни один город (из-за
@@ -186,7 +196,7 @@ def need_letter(town, tg_id):
 
     Если ни одна буква в названии города не прошла проверку,
     возвращает строку с ошибкой.
-    '''
+    """
     town_letter_list = list(town)
     reversed_tll = town_letter_list[::-1]
     no_dict_letters = [] # Список букв, на которые не начинается ни один город в базе
@@ -199,7 +209,7 @@ def need_letter(town, tg_id):
                     if not no_dict_letters and not wrong_letters:
                         return l.lower(), '0'
                     if no_dict_letters:
-                        return l.lower(), wrong_trans(no_dict_letters), '1' #ВОЗМОЖНЫ ОШИБКИ ПРИ ВЫВОДЕ(wrong_trans)
+                        return l.lower(), wrong_trans(no_dict_letters), '1'
                     if wrong_letters:
                         return l.lower(), wrong_trans(wrong_letters), '2'
                     else:
@@ -240,8 +250,9 @@ def validity(tg_id, input):
     else:
         return is_text(input)
 
+
 def wrong_trans(letter_list):
-    '''Превращает список неверных букв в строку с запятыми'''
+    """Превращает список неверных букв в строку с запятыми"""
     new_string = ''
     if len(letter_list) <= 1:
         new_string = f'{letter_list[0].upper()}'
@@ -251,15 +262,18 @@ def wrong_trans(letter_list):
 
     return new_string
 
+
 def town_on_letter(tg_id, letter):
-    '''Возвращает случайный город на букву в аргументе'''
+    """Возвращает случайный город на букву в аргументе"""
     dict = get_data(tg_id)[0]
     upper_letter = letter.upper()
     return random.choice(dict[upper_letter])
 
+
 def google_link(town):
     link = f'https://www.google.com/search?q={town}+город'
     return link
+
 
 def get_link(tg_id, town):
     if get_data(tg_id)[-1] == 'ru':
