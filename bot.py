@@ -91,6 +91,7 @@ def human_turn(message):
 
 
 def first_turn(tg_id, mode):
+    """Случайный выбор того, кому принадлежит первый ход"""
     if mode == 'ru':
         mode_name = 'Города 🇷🇺 (РФ)'
     else:
@@ -144,48 +145,47 @@ def need_letter_help(tg_id, town, bot=False):
 
 
 def human_validity(tg_id, input):
+    """
+    Проверяет ввод пользователя. Если он не соответствует требованиям
+    (т.е. не является городом, имеет спец. символы или цифры,
+    является названным городом), — отправляет в чат сообщение с
+    соответствующей ошибкой.
+    """
     validity = g.validity(tg_id, input)
 
-    while True:
-        if validity == True:
-            g.add_town(input, tg_id)
-            bot_turn(tg_id, input)
-            break
+    if validity == True:
+        g.add_town(input, tg_id)
+        bot_turn(tg_id, input)
 
-        if validity == 'not_town':
-            bot.send_message(tg_id, random.choice(errors['not_town']))
-            break
+    if validity == 'not_town':
+        bot.send_message(tg_id, random.choice(errors['not_town']))
 
-        if validity in errors.keys():
-            bot.send_message(tg_id, errors[validity], parse_mode='Markdown')
-            break
+    if validity in errors.keys():
+        bot.send_message(tg_id, errors[validity], parse_mode='Markdown')
 
-        if validity == '0':
-            last_town = g.usage_check(tg_id, town=input, last=True)
-            help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message, parse_mode='Markdown')
-            break
+    if validity == '0':
+        last_town = g.usage_check(tg_id, town=input, last=True)
+        help_message = need_letter_help(tg_id, last_town)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
-        if validity == '1' or validity == '2':
-            last_town = g.usage_check(tg_id, town=input, last=True)
-            help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message, parse_mode='Markdown')
-            break
+    if validity == '1' or validity == '2':
+        last_town = g.usage_check(tg_id, town=input, last=True)
+        help_message = need_letter_help(tg_id, last_town)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
-        if validity == '3':
-            last_town = g.usage_check(tg_id, town=input, last=True)
-            help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message, parse_mode='Markdown')
-            break
+    if validity == '3':
+        last_town = g.usage_check(tg_id, town=input, last=True)
+        help_message = need_letter_help(tg_id, last_town)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
-        if validity == '4' or validity == '5':
-            last_town = g.usage_check(tg_id, town=input, last=True)
-            help_message = need_letter_help(tg_id, last_town)
-            bot.send_message(tg_id, help_message, parse_mode='Markdown')
-            break
+    if validity == '4' or validity == '5':
+        last_town = g.usage_check(tg_id, town=input, last=True)
+        help_message = need_letter_help(tg_id, last_town)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
 
 def bot_first_turn(tg_id):
+    """Первый ход бота. Отправляет в чат случайный город."""
     bot_town = g.rand_town(tg_id)
     g.add_town(bot_town, tg_id)
     town_link = g.get_link(tg_id, bot_town)
@@ -199,6 +199,7 @@ def bot_first_turn(tg_id):
 
 
 def bot_try(tg_id, letter):
+    """Попытка выбора города ботом"""
     while True:
         bot_town = g.town_on_letter(tg_id, letter)
 
@@ -207,6 +208,10 @@ def bot_try(tg_id, letter):
 
 
 def bot_turn(tg_id, human_town):
+    """
+    Отправляет следующий город (и ссылку) в чат, если есть такая возможность.
+    При различных сценариях отправляет вспомогательное сообщение.
+    """
     event_code = g.need_letter(human_town, tg_id)[-1]
 
     while True:
@@ -252,5 +257,6 @@ def bot_turn(tg_id, human_town):
             help_message = need_letter_help(tg_id, human_town, bot=True)
             bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
+
 
 bot.polling(none_stop=True)

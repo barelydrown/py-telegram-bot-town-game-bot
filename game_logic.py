@@ -16,30 +16,23 @@ def get_data(tg_id):
     """Определяет режим игры и возвращает необходимые данные"""
     with open(f'users/{tg_id}/mode.txt', 'r') as f1:
         mode = f1.read()
-    if mode == 'ru': # Города РФ
+    if mode == 'ru':  # Города РФ
         dict = dict_init.RU_TOWNS_DICT
         all_towns_list = dict_init.RU_TOWNS_LIST
         links = dict_init.LINKS
         return dict, all_towns_list, links, 'ru'
 
-    if mode == 'world': # Города мира, нормальный
+    if mode == 'world':  # Города мира
         dict = dict_init.TOWNS_DICT
         all_towns_list = dict_init.TOWNS_LIST
         links = None
         return dict, all_towns_list, links, 'world'
 
-    if mode == 'world0': # Города Мира, легкий
-        dict = dict_init.TOWNS_DICT
-        all_towns_list = dict_init.TOWNS_LIST
-        links = None
-        return dict, all_towns_list, links, 'world0'
-
 
 def is_text(input):
     """
-    Аргументом может быть только строка.
-    Проверяет строку на наличие цифр  и сиимволов.
-    Возвращает True или название ошибки.
+    Аргументом может быть только строка. Проверяет строку на наличие
+    цифр и символов. Возвращает True или название ошибки.
     """
     for s in list(input):
         if s in list(digits):
@@ -100,7 +93,7 @@ def letter_validity(town, input_town):
 def usage_check(tg_id, town=None, last=False):
     """
     Открывает список названных городов. Если список пустой,
-    возвращает соответсвующую строку сценария.
+    возвращает соответствующую строку сценария.
     Если список не пустой, проверяет был ли уже назван город.
     Если параметр last=True, возвращает последний названный город.
     """
@@ -114,11 +107,11 @@ def usage_check(tg_id, town=None, last=False):
                 return span2[-1]
 
             if town.lower() not in span2:
-                return True # Если город еще не был назван
+                return True  # Если город еще не был назван
             else:
-                return 'used_town' # Если город уже был назван
+                return 'used_town'  # Если город уже был назван
         else:
-            return 'first_turn' # Если список названных городов пустой
+            return 'first_turn'  # Если список названных городов пустой
 
 
 def last_town(tg_id):
@@ -146,8 +139,10 @@ def game_progress(tg_id):
 
 
 def letter_existence(tg_id, letter):
-    '''Проверяет существование городов,
-    начинающихся на букву, указанную в агрументе'''
+    """
+    Проверяет существование городов, начинающихся
+    на букву, указанную в аргументе.
+    """
     dict = get_data(tg_id)[0]
     if letter.upper() in dict.keys():
         return True
@@ -166,44 +161,48 @@ def rest_check(letter, tg_id):
 
     used_dict = {}
     first_letters = []
-    for t in used_towns_up: # Создает список всех первых букв использованных городов
+    for t in used_towns_up:  # Создает список всех первых букв
+        # использованных городов
         first_letters.append(t[0])
 
-    for l in set(first_letters): # Добавляет в словарь ключи (первые буквы всех использованных городов)
+    for l in set(first_letters):  # Добавляет в словарь ключи (первые буквы
+        # всех использованных городов)
         used_dict[l] = []
 
-    for t in used_towns_up: # Формирует словарь использованных городов
+    for t in used_towns_up:  # Формирует словарь использованных городов
         f_l = t[0]
         used_dict[f_l].append(t)
 
-    if letter_existence(tg_id, letter): # Есть ли в базе города на букву
+    if letter_existence(tg_id, letter):  # Есть ли в базе города на букву
         try:
             if set(used_dict[letter.upper()]) != set(dict[letter.upper()]):
-                return True # Если города на букву остались
+                return True  # Если города на букву остались
             else:
-                return 'all_town_on_letter_used' # Если городов на букву не осталось
+                return 'all_town_on_letter_used'  # Если городов на букву не
+                # осталось
         except:
             return True
     else:
-        return 'no_letter_dict' # Если буквы нет в словаре
+        return 'no_letter_dict'  # Если буквы нет в словаре
+
 
 def need_letter(town, tg_id):
     """
-    Возвращает нужную букву или строку ошибки.
+    Возвращает нужную букву (буквы не прошедшие проверку) и номер сценария.
 
-    Если на последнюю букву input_town не начинается ни один город (из-за
+    Если на последнюю букву town не начинается ни один город (из-за
     его присутствия в used_towns.txt), возвращает следующую букву (с конца)
     в названии города (если та также пройдет вышеуказанную проверку).
 
-    Если ни одна буква в названии города не прошла проверку,
-    возвращает строку с ошибкой.
+    Если ни одна буква в названии города не прошла проверку, возвращает
+    списки непрошедших проверку букв, а также номер сценария.
     """
     town_letter_list = list(town)
     reversed_tll = town_letter_list[::-1]
-    no_dict_letters = [] # Список букв, на которые не начинается ни один город в базе
-    wrong_letters = [] # Список букв, на которые не осталось городов
+    no_dict_letters = []  # Список букв, на которые не начинается ни один город
+    wrong_letters = []  # Список букв, на которые не осталось городов
 
-    for l in reversed_tll: # Проходит циклом по всем буквам города (в обратном порядке)
+    for l in reversed_tll:
         if rest_check(l, tg_id=tg_id) != 'no_letter_dict':
             if rest_check(l, tg_id=tg_id) != 'all_town_on_letter_used':
                 if rest_check(l, tg_id=tg_id) == True:
@@ -225,8 +224,9 @@ def need_letter(town, tg_id):
             if len(no_dict_letters + wrong_letters) == len(town):
                 return no_dict_letters, wrong_letters, '5'
 
+
 def validity(tg_id, input):
-    '''Возвращает строку/номер ошибки или True, если ее нет'''
+    """Возвращает строку/номер ошибки или True, если ее нет"""
     if is_text(input) == True:
         if town_validity(tg_id, input):
             use_check = usage_check(tg_id, town=input)
@@ -237,7 +237,6 @@ def validity(tg_id, input):
                 first_letter = input[0].lower()
                 answer = usage_check(tg_id, town=input, last=True)
                 need = need_letter(answer, tg_id)
-
                 if need[0] == first_letter:
                     return True
                 else:
@@ -270,11 +269,13 @@ def town_on_letter(tg_id, letter):
 
 
 def google_link(town):
+    """Формирует поисковой запрос Google"""
     link = f'https://www.google.com/search?q={town}+город'
     return link
 
 
 def get_link(tg_id, town):
+    """Возвращает ссылку на город в аргументе"""
     if get_data(tg_id)[-1] == 'ru':
         links = get_data(tg_id)[2]
         try:
@@ -286,6 +287,7 @@ def get_link(tg_id, town):
 
 
 def check_mode(tg_id):
+    """Возвращает True, если выбран режим игры"""
     with open(f'users/{tg_id}/mode.txt', 'r') as file:
         mode = file.read()
         if mode:
