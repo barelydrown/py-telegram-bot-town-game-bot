@@ -159,7 +159,6 @@ def human_validity(tg_id, input):
         if validity == '0':
             last_town = g.usage_check(tg_id, town=input, last=True)
             help_message = need_letter_help(tg_id, last_town)
-            print(help_message)
             bot.send_message(tg_id, help_message, parse_mode='Markdown')
             break
 
