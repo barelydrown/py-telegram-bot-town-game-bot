@@ -2,9 +2,10 @@ import random
 from string import digits
 
 import dict_init
-from config import my_id
 
 start_message = dict_init.start_message
+help_message = dict_init.help_message
+info_message = dict_init.info_message
 rif = dict_init.reply_input_field
 rules = dict_init.rules
 punctuation = dict_init.PUNCTUATION
@@ -13,7 +14,7 @@ errors = dict_init.errors
 
 def get_data(tg_id):
     """Определяет режим игры и возвращает необходимые данные"""
-    with open(f'users/{tg_id}/cfg.txt', 'r') as f1:
+    with open(f'users/{tg_id}/mode.txt', 'r') as f1:
         mode = f1.read()
     if mode == 'ru': # Города РФ
         dict = dict_init.RU_TOWNS_DICT
@@ -239,7 +240,6 @@ def validity(tg_id, input):
 
                 if need[0] == first_letter:
                     return True
-
                 else:
                     return need[-1]
 
@@ -259,7 +259,6 @@ def wrong_trans(letter_list):
     else:
         for letter in letter_list:
             new_string += f'{letter.upper()}' + ', '
-
     return new_string
 
 
@@ -285,8 +284,9 @@ def get_link(tg_id, town):
     else:
         return google_link(town)
 
+
 def check_mode(tg_id):
-    with open(f'users/{tg_id}/cfg.txt', 'r') as file:
+    with open(f'users/{tg_id}/mode.txt', 'r') as file:
         mode = file.read()
         if mode:
             return True

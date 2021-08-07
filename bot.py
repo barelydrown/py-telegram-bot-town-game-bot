@@ -1,5 +1,6 @@
 import os
 import random
+import datetime
 
 import telebot
 from telebot import types
@@ -18,14 +19,32 @@ def start(message):
     if not os.path.isdir(f'users/{tg_id}'):
         os.mkdir(f'users/{tg_id}')
 
+        with open(f'users/{tg_id}/bio.txt', 'w') as bio:
+            first_name = message.chat.first_name
+            last_name = message.chat.last_name
+            username = message.chat.username
+            reg_time = datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+            bio.write(f'[{first_name} {last_name} ({username}, {tg_id})] '
+                      f'{reg_time}')
+
     markup_reply = types.ReplyKeyboardMarkup(resize_keyboard=True,
                                              one_time_keyboard=False,
                                              input_field_placeholder=g.rif)
     towns_ru = types.KeyboardButton('Города 🇷🇺')
     towns_world = types.KeyboardButton('Города 🌎')
     markup_reply.add(towns_ru, towns_world)
-    bot.send_message(tg_id, g.start_message,
+    bot.send_message(tg_id, g.start_message.format(message.chat.first_name),
                      parse_mode='Markdown', reply_markup=markup_reply)
+
+
+@bot.message_handler(commands=['help', 'h'])
+def send_help(message):
+    bot.send_message(message.chat.id, g.help_message, parse_mode='Markdown')
+
+
+@bot.message_handler(commands=['info'])
+def show_info(message):
+    bot.send_message(message.chat.id, g.info_message, parse_mode='Markdown')
 
 
 @bot.message_handler(commands=['rules', 'r'])
@@ -33,7 +52,7 @@ def show_rules(message):
     bot.send_message(message.chat.id, g.rules, parse_mode='Markdown')
 
 
-@bot.message_handler(commands=['progress'])
+@bot.message_handler(commands=['progress', 'p'])
 def show_game_progress(message):
     """Отправляет сообщение с ходом игры"""
     used_towns = g.game_progress(message.chat.id)
@@ -48,7 +67,7 @@ def ru_mode(message):
     tg_id = message.chat.id
     with open(f'users/{tg_id}/used_towns.txt', 'w') as f:
         pass
-    with open(f'users/{tg_id}/cfg.txt', 'w') as f1:
+    with open(f'users/{tg_id}/mode.txt', 'w') as f1:
         f1.write('ru')
     first_turn(tg_id)
 
@@ -58,7 +77,7 @@ def world_mode(message):
     tg_id = message.chat.id
     with open(f'users/{tg_id}/used_towns.txt', 'w') as f:
         pass
-    with open(f'users/{tg_id}/cfg.txt', 'w') as f1:
+    with open(f'users/{tg_id}/mode.txt', 'w') as f1:
         f1.write('world')
     first_turn(tg_id)
 
@@ -82,7 +101,7 @@ def first_turn(tg_id):
 
 
 def need_letter_help(tg_id, town, bot=False):
-    '''Возвращает строку ошибки в отредактированном формате'''
+    """Возвращает строку ошибки в отредактированном формате"""
     event_code = g.need_letter(town, tg_id)[-1]
     sample_message = errors['need_letter'][event_code]
     pronoun = 'Вам'
