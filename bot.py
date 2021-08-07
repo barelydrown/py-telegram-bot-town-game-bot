@@ -69,7 +69,7 @@ def ru_mode(message):
         pass
     with open(f'users/{tg_id}/mode.txt', 'w') as f1:
         f1.write('ru')
-    first_turn(tg_id)
+    first_turn(tg_id, 'ru')
 
 
 @bot.message_handler(regexp='Города 🌎')
@@ -79,7 +79,7 @@ def world_mode(message):
         pass
     with open(f'users/{tg_id}/mode.txt', 'w') as f1:
         f1.write('world')
-    first_turn(tg_id)
+    first_turn(tg_id, 'world')
 
 
 @bot.message_handler(content_types=['text'])
@@ -90,8 +90,12 @@ def human_turn(message):
         human_validity(tg_id, input)
 
 
-def first_turn(tg_id):
-    bot.send_message(tg_id, 'Сыграем?')
+def first_turn(tg_id, mode):
+    if mode == 'ru':
+        mode_name = 'Города 🇷🇺 (РФ)'
+    else:
+        mode_name = 'Города 🌎 (Мир)'
+    bot.send_message(tg_id, f'Играем в {mode_name}')
     r = random.randint(0, 1)
     if r == 0:
         bot.send_message(tg_id, 'Я первый')
