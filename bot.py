@@ -227,7 +227,6 @@ def bot_turn(tg_id, human_town):
     event_code = g.need_letter(human_town, tg_id)[-1]
 
     if event_code == '0':
-        print('event_code=0')
         need_letter = g.need_letter(human_town, tg_id)[0]
         bot_town = bot_try(tg_id, need_letter)
         g.add_town(bot_town, tg_id)
