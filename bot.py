@@ -27,18 +27,29 @@ def start(message):
             bio.write(f'[{first_name} {last_name} ({username}, {tg_id})] '
                       f'{reg_time}')
 
+    bot.send_message(tg_id, g.start_message.format(message.chat.first_name),
+                     parse_mode='Markdown', reply_markup=new_game_markup())
+
+
+@bot.message_handler(commands=['new'])
+def new_game(message):
+    tg_id = message.chat.id
+    bot.send_message(tg_id, 'Сыграем?', reply_markup=new_game_markup())
+
+
+def new_game_markup():
+    """Возвращает объект Reply-клавиатуры"""
     markup_reply = types.ReplyKeyboardMarkup(resize_keyboard=True,
                                              one_time_keyboard=False,
                                              input_field_placeholder=g.rif)
     towns_ru = types.KeyboardButton('Города 🇷🇺')
     towns_world = types.KeyboardButton('Города 🌎')
     markup_reply.add(towns_ru, towns_world)
-    bot.send_message(tg_id, g.start_message.format(message.chat.first_name),
-                     parse_mode='Markdown', reply_markup=markup_reply)
+    return markup_reply
 
 
 @bot.message_handler(commands=['help', 'h'])
-def send_help(message):
+def show_help(message):
     bot.send_message(message.chat.id, g.help_message, parse_mode='Markdown')
 
 
@@ -97,6 +108,7 @@ def first_turn(tg_id, mode):
     else:
         mode_name = 'Города 🌎 (Мир)'
     bot.send_message(tg_id, f'Играем в {mode_name}')
+
     r = random.randint(0, 1)
     if r == 0:
         bot.send_message(tg_id, 'Я первый')
@@ -120,7 +132,7 @@ def need_letter_help(tg_id, town, bot=False):
         help_message = sample_message.format(need_letter)
         return help_message
 
-    if event_code == '1' or event_code == '2':
+    elif event_code == '1' or event_code == '2':
         need_letter = g.need_letter(town, tg_id)[0].upper()
         wrong_letters = g.need_letter(town, tg_id)[1]
         if len(wrong_letters) > 1:
@@ -129,7 +141,7 @@ def need_letter_help(tg_id, town, bot=False):
                                              letter_end, wrong_letters)
         return help_message
 
-    if event_code == '3':
+    elif event_code == '3':
         need_letter = g.need_letter(town, tg_id)[0].upper()
         no_dict_letters = g.need_letter(town, tg_id)[1]
         no_town_letters = g.need_letter(town, tg_id)[2]
@@ -137,7 +149,7 @@ def need_letter_help(tg_id, town, bot=False):
                                              no_dict_letters, no_town_letters)
         return help_message
 
-    if event_code == '4' or event_code == '5':
+    elif event_code == '4' or event_code == '5':
         no_dict_letters = g.need_letter(town, tg_id)[0]
         no_town_letters = g.need_letter(town, tg_id)[1]
         help_message = sample_message.format(no_dict_letters, no_town_letters)
@@ -157,28 +169,28 @@ def human_validity(tg_id, input):
         g.add_town(input, tg_id)
         bot_turn(tg_id, input)
 
-    if validity == 'not_town':
+    elif validity == 'not_town':
         bot.send_message(tg_id, random.choice(errors['not_town']))
 
-    if validity in errors.keys():
+    elif validity in errors.keys():
         bot.send_message(tg_id, errors[validity], parse_mode='Markdown')
 
-    if validity == '0':
+    elif validity == '0':
         last_town = g.usage_check(tg_id, town=input, last=True)
         help_message = need_letter_help(tg_id, last_town)
         bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
-    if validity == '1' or validity == '2':
+    elif validity == '1' or validity == '2':
         last_town = g.usage_check(tg_id, town=input, last=True)
         help_message = need_letter_help(tg_id, last_town)
         bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
-    if validity == '3':
+    elif validity == '3':
         last_town = g.usage_check(tg_id, town=input, last=True)
         help_message = need_letter_help(tg_id, last_town)
         bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
-    if validity == '4' or validity == '5':
+    elif validity == '4' or validity == '5':
         last_town = g.usage_check(tg_id, town=input, last=True)
         help_message = need_letter_help(tg_id, last_town)
         bot.send_message(tg_id, help_message, parse_mode='Markdown')
@@ -214,49 +226,43 @@ def bot_turn(tg_id, human_town):
     """
     event_code = g.need_letter(human_town, tg_id)[-1]
 
-    while True:
-        if event_code == '0':
-            need_letter = g.need_letter(human_town, tg_id)[0]
-            bot_town = bot_try(tg_id, need_letter)
-            g.add_town(bot_town, tg_id)
-            town_link = g.get_link(tg_id, bot_town)
-            bot.send_message(tg_id, f'<a href="{town_link}">{bot_town}</a>',
-                             parse_mode='HTML', disable_web_page_preview=True)
+    if event_code == '0':
+        print('event_code=0')
+        need_letter = g.need_letter(human_town, tg_id)[0]
+        bot_town = bot_try(tg_id, need_letter)
+        g.add_town(bot_town, tg_id)
+        town_link = g.get_link(tg_id, bot_town)
+        bot.send_message(tg_id, f'<a href="{town_link}">{bot_town}</a>',
+                         parse_mode='HTML', disable_web_page_preview=True)
 
-            next_letter = g.need_letter(bot_town, tg_id)[0]
-            if next_letter != bot_town[-1]:
-                help_message = need_letter_help(tg_id, bot_town)
-                bot.send_message(tg_id, help_message, parse_mode='Markdown')
-            break
-
-        if event_code == '1' or event_code == '2':
-            help_message = need_letter_help(tg_id, human_town, bot=True)
+        next_letter = g.need_letter(bot_town, tg_id)[0]
+        if next_letter != bot_town[-1]:
+            help_message = need_letter_help(tg_id, bot_town)
             bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
-            need_letter = g.need_letter(human_town, tg_id)[0]
-            bot_town = bot_try(tg_id, need_letter)
-            g.add_town(bot_town, tg_id)
-            town_link = g.get_link(tg_id, bot_town)
-            bot.send_message(tg_id, f'<a href="{town_link}">{bot_town}</a>',
-                             parse_mode='HTML', disable_web_page_preview=True)
-            break
+    elif event_code == '1' or event_code == '2':
+        help_message = need_letter_help(tg_id, human_town, bot=True)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
+        need_letter = g.need_letter(human_town, tg_id)[0]
+        bot_town = bot_try(tg_id, need_letter)
+        g.add_town(bot_town, tg_id)
+        town_link = g.get_link(tg_id, bot_town)
+        bot.send_message(tg_id, f'<a href="{town_link}">{bot_town}</a>',
+                         parse_mode='HTML', disable_web_page_preview=True)
 
-        if event_code == '3':
-            help_message = need_letter_help(tg_id, human_town, bot=True)
-            bot.send_message(tg_id, help_message, parse_mode='Markdown')
+    elif event_code == '3':
+        help_message = need_letter_help(tg_id, human_town, bot=True)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
+        need_letter = g.need_letter(human_town, tg_id)[0]
+        bot_town = bot_try(tg_id, need_letter)
+        g.add_town(bot_town, tg_id)
+        town_link = g.get_link(tg_id, bot_town)
+        bot.send_message(tg_id, f'<a href="{town_link}">{bot_town}</a>',
+                         parse_mode='HTML', disable_web_page_preview=True)
 
-            need_letter = g.need_letter(human_town, tg_id)[0]
-            bot_town = bot_try(tg_id, need_letter)
-            g.add_town(bot_town, tg_id)
-            town_link = g.get_link(tg_id, bot_town)
-            bot.send_message(tg_id, f'<a href="{town_link}">{bot_town}</a>',
-                             parse_mode='HTML', disable_web_page_preview=True)
-            break
-
-        if event_code == '4' or event_code == '5':
-            help_message = need_letter_help(tg_id, human_town, bot=True)
-            bot.send_message(tg_id, help_message, parse_mode='Markdown')
-            break
+    elif event_code == '4' or event_code == '5':
+        help_message = need_letter_help(tg_id, human_town, bot=True)
+        bot.send_message(tg_id, help_message, parse_mode='Markdown')
 
 
 bot.polling(none_stop=True)
