@@ -27,6 +27,12 @@ def start(message):
             bio.write(f'[{first_name} {last_name} ({username}, {tg_id})] '
                       f'{reg_time}')
 
+        used_f = open(f'users/{tg_id}/used_towns.txt', 'w+')
+        used_f.close()
+
+        mode_f = open(f'users/{tg_id}/mode.txt', 'w+')
+        mode_f.close()
+
     bot.send_message(tg_id, g.start_message.format(message.chat.first_name),
                      parse_mode='Markdown', reply_markup=new_game_markup())
 
